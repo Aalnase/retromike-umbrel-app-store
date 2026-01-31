@@ -9,8 +9,7 @@ port: 5050
 icon: https://raw.githubusercontent.com/TriLogic/umbrel-store/refs/heads/main/umbrel-store-postgre-pgadmin/icon.svg
 description: >-
   A bundled PostgreSQL database and pgAdmin 4 web UI. Persistent volumes,
-  proxy-safe settings for Umbrel, and a pre-registered local server. Auto 
-  add miningcore database. 
+  proxy-safe settings for Umbrel, and a pre-registered local server.
 
 developer: Retro Mike
 website: https://www.postgresql.org/
