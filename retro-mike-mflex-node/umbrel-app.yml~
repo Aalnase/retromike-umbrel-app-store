@@ -4,7 +4,7 @@ name: Multiflex (MFLEX) Node
 tagline: MFLEX full node (for Miningcore)
 icon: https://multiflexcoin.com/assets/img/mflex_symbol_64.png
 category: Mining Nodes
-version: "2.0.0-umbrel5"
+version: "2.0.0-umbrel4"
 port: 8570
 
 description: |
