@@ -1,38 +1,49 @@
 #!/usr/bin/env bash
-
-# NOTE: No `set -euo pipefail` on purpose.
+# intentionally NO 'set -euo pipefail' (Umbrel/SSH sessions & installs must not hard-fail)
 
 APP_DATA_DIR="${APP_DATA_DIR:-/home/umbrel/umbrel/app-data/retro-mike-miningcore}"
 MC_DIR="/home/umbrel/.miningcore"
+OLD_DIR="$APP_DATA_DIR/data"
 
-seed_if_missing() {
+# Migrate old config location (legacy)
+if [ -d "$OLD_DIR" ] && [ ! -d "$MC_DIR" ]; then
+  echo "This will migrate the old config location ($OLD_DIR -> $MC_DIR)"
+  mv "$OLD_DIR" "$MC_DIR" 2>/dev/null || true
+fi
+
+seed_file() {
   local src="$1"
   local dst="$2"
 
-  # If Docker ever created a directory at this path (happens when the file was missing), remove it.
+  # If docker previously created a DIRECTORY at the file path, remove it
   if [ -d "$dst" ]; then
     rm -rf "$dst" 2>/dev/null || true
   fi
 
+  # Seed if missing
   if [ ! -f "$dst" ]; then
     cp -a "$src" "$dst" 2>/dev/null || true
   fi
 }
 
-echo "== Miningcore pre-start =="
-
+# Ensure base dirs exist
 mkdir -p "$MC_DIR/pools.d" "$MC_DIR/wallet-backups" 2>/dev/null || true
 
-# Seed base files (only if missing)
-seed_if_missing "$APP_DATA_DIR/coins.json"       "$MC_DIR/coins.json"
-seed_if_missing "$APP_DATA_DIR/fees.json"        "$MC_DIR/fees.json"
-seed_if_missing "$APP_DATA_DIR/assets/config.base.json" "$MC_DIR/config.base.json"
+# These MUST be regular files for the bind-mounts
+seed_file "$APP_DATA_DIR/coins.json" "$MC_DIR/coins.json"
+seed_file "$APP_DATA_DIR/assets/config.base.json" "$MC_DIR/config.base.json"
 
-# Always render config.json (safe even if there are no pools yet)
-python3 "$APP_DATA_DIR/scripts/render-config.py" >/dev/null 2>&1 || true
+# config.json MUST be a file for the bind-mount
+if [ -d "$MC_DIR/config.json" ]; then
+  rm -rf "$MC_DIR/config.json" 2>/dev/null || true
+fi
 
-# Fix ownership + perms (Miningcore container runs as 1000:1000)
-chown -R 1000:1000 "$MC_DIR" 2>/dev/null || true
+if [ ! -f "$MC_DIR/config.json" ]; then
+  python3 "$APP_DATA_DIR/scripts/render-config.py" >/dev/null 2>&1 || true
+fi
+
+# Ownership/Perms (Miningcore container runs as 1000:1000)
+chown -R umbrel:umbrel "$MC_DIR" 2>/dev/null || true
 find "$MC_DIR" -type d -exec chmod 755 {} + 2>/dev/null || true
 find "$MC_DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
 
