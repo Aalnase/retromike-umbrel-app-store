@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Auto-bootstrap Miningcore DB/user/schema on Postgres install.
+# Keep this script resilient: never fail the Postgres app install if bootstrap has a transient error.
+
+APP_DATA_DIR="${APP_DATA_DIR:-/home/umbrel/umbrel/app-data/retro-mike-postgres}"
+
+PG_CONTAINER="retro-mike-postgres_db_1"
+PG_SUPERUSER="umbrel"
+PG_BOOTSTRAP_DB="umbrel"
+
+log() { echo "[postgres-miningcore-bootstrap] $*"; }
+
+wait_ready() {
+  # wait up to ~120s
+  for i in $(seq 1 120); do
+    if docker ps --format '{{.Names}}' | grep -qx "$PG_CONTAINER"; then
+      if docker exec "$PG_CONTAINER" pg_isready -U "$PG_SUPERUSER" -d "$PG_BOOTSTRAP_DB" >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+log "Waiting for Postgres container ($PG_CONTAINER) ..."
+if ! wait_ready; then
+  log "WARN: Postgres not ready; skipping Miningcore DB bootstrap."
+  exit 0
+fi
+
+log "Ensuring role miningcore exists ..."
+docker exec "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d "$PG_BOOTSTRAP_DB" -v ON_ERROR_STOP=1 -tc       "SELECT 1 FROM pg_roles WHERE rolname='miningcore';" | grep -q 1       || docker exec "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d "$PG_BOOTSTRAP_DB" -v ON_ERROR_STOP=1 -c       "CREATE ROLE miningcore LOGIN PASSWORD 'miningcore';"       || true
+
+log "Ensuring database miningcore exists ..."
+docker exec "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d "$PG_BOOTSTRAP_DB" -v ON_ERROR_STOP=1 -tc       "SELECT 1 FROM pg_database WHERE datname='miningcore';" | grep -q 1       || docker exec "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d "$PG_BOOTSTRAP_DB" -v ON_ERROR_STOP=1 -c       "CREATE DATABASE miningcore OWNER miningcore;"       || true
+
+# Apply schema if shares table missing
+if docker exec "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d miningcore -v ON_ERROR_STOP=1 -tc       "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='shares';" | grep -q 1; then
+  log "Schema already present (shares table exists)."
+  exit 0
+fi
+
+SCHEMA_FILE="$APP_DATA_DIR/assets/miningcore-schema.sql"
+if [ ! -f "$SCHEMA_FILE" ]; then
+  log "WARN: schema file missing: $SCHEMA_FILE"
+  exit 0
+fi
+
+log "Applying Miningcore schema ..."
+cat "$SCHEMA_FILE" | docker exec -i "$PG_CONTAINER" psql -U "$PG_SUPERUSER" -d miningcore >/dev/null 2>&1       && log "Miningcore schema applied."       || log "WARN: failed to apply Miningcore schema (you can re-run manually)."
+
+exit 0
