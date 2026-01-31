@@ -1,10 +1,10 @@
-manifestVersion: 1
+manifestVersion: 1.1
 
 id: retro-mike-postgres
 name: PostgreSQL + pgAdmin
 tagline: PostgreSQL with a browser-based admin UI
 category: Databases
-version: "1.0.10-mflex1"
+version: "1.0.11-mflex1"
 port: 5050
 icon: https://raw.githubusercontent.com/TriLogic/umbrel-store/refs/heads/main/umbrel-store-postgre-pgadmin/icon.svg
 description: >-
@@ -22,7 +22,7 @@ gallery:
   - https://raw.githubusercontent.com/TriLogic/umbrel-store/refs/heads/main/umbrel-store-postgre-pgadmin/icon.svg
 
 releaseNotes: >-
-  Initial release of PostgreSQL + pgAdmin as a single Umbrel app.
+  1.0.11-mflex1: Auto-create Miningcore role/database + schema during Postgres install (idempotent).
 
 dependencies: []
 path: ""
