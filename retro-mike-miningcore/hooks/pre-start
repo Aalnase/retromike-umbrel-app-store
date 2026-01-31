@@ -1,39 +1,38 @@
 #!/usr/bin/env bash
 
-# NOTE: No `set -euo pipefail` on purpose.
-
 APP_DATA_DIR="${APP_DATA_DIR:-/home/umbrel/umbrel/app-data/retro-mike-miningcore}"
 MC_DIR="/home/umbrel/.miningcore"
+
+log() { echo "[miningcore pre-start] $*"; }
 
 seed_if_missing() {
   local src="$1"
   local dst="$2"
-
-  # If Docker ever created a directory at this path (happens when the file was missing), remove it.
-  if [ -d "$dst" ]; then
-    rm -rf "$dst" 2>/dev/null || true
-  fi
-
-  if [ ! -f "$dst" ]; then
-    cp -a "$src" "$dst" 2>/dev/null || true
+  if [ ! -f "$dst" ] && [ -f "$src" ]; then
+    cp -a "$src" "$dst"
+    log "seeded: $dst"
+  else
+    log "kept:   $dst"
   fi
 }
 
-echo "== Miningcore pre-start =="
+mkdir -p "${MC_DIR}/pools.d" "${MC_DIR}/wallet-backups"
 
-mkdir -p "$MC_DIR/pools.d" "$MC_DIR/wallet-backups" 2>/dev/null || true
+# wenn der User schon was hat -> nicht überschreiben
+seed_if_missing "${APP_DATA_DIR}/assets/coins.json"       "${MC_DIR}/coins.json"
+seed_if_missing "${APP_DATA_DIR}/assets/fees.json"        "${MC_DIR}/fees.json"
+seed_if_missing "${APP_DATA_DIR}/assets/config.base.json" "${MC_DIR}/config.base.json"
 
-# Seed base files (only if missing)
-seed_if_missing "$APP_DATA_DIR/coins.json"       "$MC_DIR/coins.json"
-seed_if_missing "$APP_DATA_DIR/fees.json"        "$MC_DIR/fees.json"
-seed_if_missing "$APP_DATA_DIR/assets/config.base.json" "$MC_DIR/config.base.json"
+# config.json aus base+pools rendern, wenn fehlt
+if [ ! -f "${MC_DIR}/config.json" ]; then
+  log "rendering config.json ..."
+  python3 "${APP_DATA_DIR}/scripts/render-config.py" >/dev/null 2>&1 || true
+fi
 
-# Always render config.json (safe even if there are no pools yet)
-python3 "$APP_DATA_DIR/scripts/render-config.py" >/dev/null 2>&1 || true
+# ownership/perms für miningcore container user (1000:1000)
+chown -R 1000:1000 "${MC_DIR}" 2>/dev/null || true
+find "${MC_DIR}" -type d -exec chmod 755 {} + 2>/dev/null || true
+find "${MC_DIR}" -type f -exec chmod 644 {} + 2>/dev/null || true
 
-# Fix ownership + perms (Miningcore container runs as 1000:1000)
-chown -R 1000:1000 "$MC_DIR" 2>/dev/null || true
-find "$MC_DIR" -type d -exec chmod 755 {} + 2>/dev/null || true
-find "$MC_DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
-
+log "done."
 exit 0

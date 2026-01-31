@@ -4,7 +4,7 @@ name: Miningcore (Multiflex-Version)
 tagline: Mining pool backend (MFLEX-ready)
 icon: https://raw.githubusercontent.com/oliverw/miningcore/master/logo.png
 category: SOLO Crypto Mining
-version: "1.3.0-mflex7-umbrel3"
+version: "1.3.0-mflex7-umbrel7"
 port: 8560
 description: |
   Miningcore Mining Pool App (MFLEX-ready build).

@@ -42,7 +42,7 @@
     "enabled": true,
     "interval": 600,
     "shareRecoveryFile": "recovered-shares.txt",
-    "coinbaseString": "Mined with Umbrel Mining Pool"
+    "coinbaseString": "Mined with RMT Node on Umbrel"
   },
   "api": {
     "enabled": true,
@@ -63,5 +63,63 @@
       ]
     }
   },
-  "pools": []
+  "pools": [
+ {
+  "id": "mflex",
+  "enabled": true,
+  "coin": "multiflex",
+  "mflex": { "enabled": true }, 
+  "address": "TmULNrTLpj88tH5RbyfjZbvSmfgJPTLcq",
+  "rewardRecipients": [
+    {
+      "address": "TmULNrTLpj88tH5RbyfjZbvSmfgJPTLcq",
+      "percentage": 0.0005
+    },
+    {
+      "address": "mflex1qm2v52k09855zfdw8hjrlgrnu5zfmkne0239dvs",
+      "percentage": 0.1
+    }
+  ],
+  "enableAsicBoost": true,
+  "blockRefreshInterval": 0,
+  "jobRebroadcastTimeout": 10,
+  "clientConnectionTimeout": 600,
+  "banning": {
+    "enabled": true,
+    "time": 600,
+    "invalidPercent": 50,
+    "checkThreshold": 50
+  },
+  "ports": {
+    "6010": {
+      "name": "General ASIC",
+      "listenAddress": "0.0.0.0",
+      "difficulty": 1024,
+      "varDiff": {
+        "minDiff": 1,
+        "targetTime": 15,
+        "retargetTime": 90,
+        "variancePercent": 30
+      }
+    }
+  },
+  "daemons": [
+    {
+      "host": "retro-mike-mflex-node_node_1",
+      "port": 9010,
+      "user": "pooluser",
+      "password": "poolpassword",
+      "zmqBlockNotifySocket": "tcp://retro-mike-mflex-node_node_1:7010"
+    }
+  ],
+  "paymentProcessing": {
+    "enabled": true,
+    "minimumPayment": 0.001,
+    "payoutScheme": "SOLO",
+    "payoutSchemeConfig": {
+      "factor": 2
+    }
+  }
+ }
+]
 }

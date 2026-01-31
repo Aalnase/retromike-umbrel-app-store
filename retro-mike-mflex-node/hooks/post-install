@@ -1,3 +1,161 @@
 #!/usr/bin/env bash
-# MFLEX wallet + Miningcore pool registration is done manually (console).
+
+APP_DATA_DIR="${APP_DATA_DIR:-/home/umbrel/umbrel/app-data/retro-mike-mflex-node}"
+MC_DIR="/home/umbrel/.miningcore"
+POOLS_DIR="${MC_DIR}/pools.d"
+
+RPC_HOST="127.0.0.1"
+RPC_PORT="9010"
+RPC_USER="pooluser"
+RPC_PASS="poolpassword"
+WALLET="pool"
+
+POOL_ID="mflex"
+COIN="multiflex"
+STRATUM_PORT="6010"
+ZMQ_PORT="7010"
+DAEMON_HOST="retro-mike-mflex-node_node_1"
+
+log() { echo "[mflex post-install] $*"; }
+
+rpc_call() {
+  # args: <path> <method> <params-json>
+  local path="$1"
+  local method="$2"
+  local params="${3:-[]}"
+
+  curl -sS --max-time 5 --connect-timeout 2 \
+    --user "${RPC_USER}:${RPC_PASS}" -H 'content-type: text/plain;' \
+    --data-binary "{\"jsonrpc\":\"1.0\",\"id\":\"mflex\",\"method\":\"${method}\",\"params\":${params}}" \
+    "http://${RPC_HOST}:${RPC_PORT}${path}"
+}
+
+wait_for_rpc() {
+  local tries=120
+  local i=1
+  while [ $i -le $tries ]; do
+    out="$(rpc_call "/" "getblockchaininfo" "[]")" || out=""
+    echo "$out" | grep -q '"error":null' && return 0
+    sleep 1
+    i=$((i+1))
+  done
+  return 1
+}
+
+seed_if_missing() {
+  local src="$1"
+  local dst="$2"
+  if [ ! -f "$dst" ] && [ -f "$src" ]; then
+    cp -a "$src" "$dst"
+    log "seeded: $dst"
+  else
+    log "kept:   $dst"
+  fi
+}
+
+log "waiting for MFLEX RPC on ${RPC_HOST}:${RPC_PORT} ..."
+if ! wait_for_rpc; then
+  log "WARN: MFLEX RPC not ready - skipping pool bootstrap (install continues)"
+  exit 0
+fi
+
+log "ensure wallet '${WALLET}' exists/loaded ..."
+rpc_call "/" "createwallet" "[\"${WALLET}\"]" >/dev/null 2>&1 || true
+rpc_call "/" "loadwallet"   "[\"${WALLET}\"]" >/dev/null 2>&1 || true
+
+log "get legacy address from wallet/${WALLET} ..."
+ADDR="$(rpc_call "/wallet/${WALLET}" "getnewaddress" "[\"\",\"legacy\"]" \
+  | python3 - <<'PY'
+import sys, json
+try:
+  d=json.load(sys.stdin)
+  r=d.get("result")
+  print((r or "").strip())
+except Exception:
+  print("")
+PY
+)"
+
+if [ -z "$ADDR" ]; then
+  log "WARN: getnewaddress returned empty - skipping pool bootstrap (install continues)"
+  exit 0
+fi
+
+log "ADDR=${ADDR}"
+
+log "prepare ${MC_DIR} ..."
+mkdir -p "${POOLS_DIR}" "${MC_DIR}/wallet-backups"
+
+seed_if_missing "${APP_DATA_DIR}/assets/miningcore/coins.json"       "${MC_DIR}/coins.json"
+seed_if_missing "${APP_DATA_DIR}/assets/miningcore/config.base.json" "${MC_DIR}/config.base.json"
+seed_if_missing "${APP_DATA_DIR}/assets/miningcore/fees.json"        "${MC_DIR}/fees.json"
+
+log "write ${POOLS_DIR}/${POOL_ID}.json ..."
+python3 - <<PY
+import json
+from pathlib import Path
+
+pool = {
+  "id": "${POOL_ID}",
+  "enabled": True,
+  "coin": "${COIN}",
+  "address": "${ADDR}",
+
+  "enableAsicBoost": True,
+  "blockRefreshInterval": 0,
+  "jobRebroadcastTimeout": 10,
+  "clientConnectionTimeout": 600,
+
+  "banning": {
+    "enabled": True,
+    "time": 600,
+    "invalidPercent": 50,
+    "checkThreshold": 50
+  },
+
+  "ports": {
+    "${STRATUM_PORT}": {
+      "name": "General",
+      "listenAddress": "0.0.0.0",
+      "difficulty": 1024,
+      "varDiff": {
+        "minDiff": 1,
+        "targetTime": 15,
+        "retargetTime": 90,
+        "variancePercent": 30
+      }
+    }
+  },
+
+  "daemons": [
+    {
+      "host": "${DAEMON_HOST}",
+      "port": ${RPC_PORT},
+      "user": "${RPC_USER}",
+      "password": "${RPC_PASS}",
+      "zmqBlockNotifySocket": "tcp://${DAEMON_HOST}:${ZMQ_PORT}"
+    }
+  ],
+
+  "paymentProcessing": {
+    "enabled": True,
+    "minimumPayment": 0.001,
+    "payoutScheme": "SOLO",
+    "payoutSchemeConfig": { "factor": 2 }
+  },
+
+  "mflex": { "enabled": True }
+}
+
+out = Path("${POOLS_DIR}") / "${POOL_ID}.json"
+out.write_text(json.dumps(pool, indent=2) + "\\n")
+print("WROTE", out)
+PY
+
+# Wichtig: Miningcore-Container läuft i.d.R. als 1000:1000
+chown -R 1000:1000 "${MC_DIR}" 2>/dev/null || true
+find "${MC_DIR}" -type d -exec chmod 755 {} + 2>/dev/null || true
+find "${MC_DIR}" -type f -exec chmod 644 {} + 2>/dev/null || true
+
+log "done. Miningcore will render config.json on its first start."
 exit 0
