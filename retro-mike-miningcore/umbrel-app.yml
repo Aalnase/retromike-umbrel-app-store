@@ -1,36 +1,41 @@
 manifestVersion: 1.1.1
 id: retro-mike-miningcore
 name: Miningcore (Multiflex-Version)
-tagline: Mining pool software (MFLEX-ready)
+tagline: Mining pool backend (MFLEX-ready)
 icon: https://raw.githubusercontent.com/oliverw/miningcore/master/logo.png
 category: SOLO Crypto Mining
-version: "1.3.0-mflex7-umbrel1"
+version: "1.3.0-mflex7-umbrel2"
 port: 8560
 description: |
-  Miningcore (Multiflex-Version) is a Multiflex-ready build of Miningcore.
+  Miningcore Mining Pool App (MFLEX-ready build).
 
-  It is powered by the miningcore-mflex fork, which adds the MFLEX-specific logic required by the Multiflex network.
-  All other coins should continue to work as in the original Retro Mike MiningCore app.
+  This app uses the Multiflex-capable Miningcore image:
+  ghcr.io/aalnase/miningcore-mflex:1.3.0-mflex7
 
-  Default PostgreSQL credentials:
-  - user: miningcore
-  - password: miningcore
-  - database: miningcore
+  Important:
+  - Existing SHA256 coins keep working as before.
+  - If no pools are configured yet, Miningcore will wait (so the installation does not fail).
 
-  Requires the Retro Mike Postgres app as backend.
+  Workflow on Umbrel:
+  1) Install Postgres
+  2) Install Miningcore (Multiflex-Version)
+  3) Install one or more coin node apps (each node registers a pool entry)
+
 developer: Retro Mike (extended)
 website: http://retromiketech.com
 submitter: Retro Mike
 submission: https://hub.docker.com/r/theretromike/miningcore
-repo: https://github.com/Aalnase/miningcore-mflex
+repo: https://hub.docker.com/r/theretromike/miningcore
 support: https://hub.docker.com/r/theretromike/miningcore
 gallery:
   - https://raw.githubusercontent.com/oliverw/miningcore/master/logo.png
 releaseNotes: |
-  Multiflex-ready build (miningcore-mflex fork).
+  2026.01.31 - Store rename + improved first-run behavior (no abort without pools)
+  2026.01.15 - Added Vertcoin Support
+  2026.01.11 - Fixed Coin Config Mapping (Needed for BC2)
+  2025.12.12 - Increased default stratum port to be 25 to allow for multiple coins
+  2025.11.30 - Initial Release
 
-  - Renamed the app in the store to make the MFLEX compatibility clear
-  - Existing coins continue to work as before
 dependencies:
   - retro-mike-postgres
 path: ""
