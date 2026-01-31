@@ -4,13 +4,12 @@ id: retro-mike-postgres
 name: PostgreSQL + pgAdmin
 tagline: PostgreSQL with a browser-based admin UI
 category: Databases
-version: "1.0.10-mflex1-umbrel1"
+version: "1.0.10"
 port: 5050
 icon: https://raw.githubusercontent.com/TriLogic/umbrel-store/refs/heads/main/umbrel-store-postgre-pgadmin/icon.svg
 description: >-
   A bundled PostgreSQL database and pgAdmin 4 web UI. Persistent volumes,
-  proxy-safe settings for Umbrel, and a pre-registered local server. Auto 
-  add miningcore database. 
+  proxy-safe settings for Umbrel, and a pre-registered local server.
 
 developer: Retro Mike
 website: https://www.postgresql.org/
@@ -23,7 +22,6 @@ gallery:
   - https://raw.githubusercontent.com/TriLogic/umbrel-store/refs/heads/main/umbrel-store-postgre-pgadmin/icon.svg
 
 releaseNotes: >-
-  Auto add miningcore database
   Initial release of PostgreSQL + pgAdmin as a single Umbrel app.
 
 dependencies: []
@@ -31,5 +29,3 @@ path: ""
 defaultUsername: admin@umbrel.local
 defaultPassword: P@ssw0rd
 
-releaseNotes: |
-  - Auto-Setup: legt MiningCore Rolle/DB (miningcore/miningcore) + Schema beim ersten Start an.
