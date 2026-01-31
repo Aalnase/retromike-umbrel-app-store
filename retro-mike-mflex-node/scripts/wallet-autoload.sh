@@ -1,38 +1,41 @@
 #!/bin/sh
+set -eu
 
+RPC_HOST="${RPC_HOST:-127.0.0.1}"
 RPC_PORT="${RPC_PORT:-9010}"
 RPC_USER="${RPC_USER:-pooluser}"
 RPC_PASS="${RPC_PASS:-poolpassword}"
 WALLET_NAME="${WALLET_NAME:-pool}"
-WAIT_SECS="${WAIT_SECS:-180}"
-SLEEP_SECS="${SLEEP_SECS:-30}"
-
-RPC="http://127.0.0.1:${RPC_PORT}"
 
 rpc() {
-  # $1 json payload, $2 path (optional)
-  _payload="$1"
-  _path="${2:-/}"
   curl -sS --user "${RPC_USER}:${RPC_PASS}" \
     -H 'content-type: text/plain;' \
-    --data-binary "${_payload}" \
-    "${RPC}${_path}" 2>/dev/null
+    --data-binary "$1" \
+    "http://${RPC_HOST}:${RPC_PORT}/" || true
 }
 
-echo "[wallet-autoload] waiting for RPC on ${RPC} ..."
-i=0
-while [ "$i" -lt "$WAIT_SECS" ]; do
-  out="$(rpc '{"jsonrpc":"1.0","id":"t","method":"getblockchaininfo","params":[]}' '/')"
-  echo "$out" | grep -q '"error":null' && break
-  i=$((i+1))
-  sleep 1
-done
+log() { echo "[wallet-autoload] $*"; }
 
-echo "[wallet-autoload] ensuring wallet '${WALLET_NAME}' exists & is loaded (loop every ${SLEEP_SECS}s)"
+log "starting (rpc=${RPC_HOST}:${RPC_PORT} wallet=${WALLET_NAME})"
 
 while true; do
-  # createwallet/loadwallet laufen am Root-Endpoint
-  rpc "{\"jsonrpc\":\"1.0\",\"id\":\"cw\",\"method\":\"createwallet\",\"params\":[\"${WALLET_NAME}\"]}" "/" >/dev/null || true
-  rpc "{\"jsonrpc\":\"1.0\",\"id\":\"lw\",\"method\":\"loadwallet\",\"params\":[\"${WALLET_NAME}\"]}" "/" >/dev/null || true
-  sleep "$SLEEP_SECS"
+  # wait for daemon RPC
+  out="$(rpc '{"jsonrpc":"1.0","id":"t","method":"getblockchaininfo","params":[]}')"
+  echo "$out" | grep -q '"error":null' || { sleep 2; continue; }
+
+  # already loaded?
+  lw="$(rpc '{"jsonrpc":"1.0","id":"lw","method":"listwallets","params":[]}')"
+  if echo "$lw" | grep -q "\"${WALLET_NAME}\""; then
+    sleep 20
+    continue
+  fi
+
+  log "wallet not loaded -> create/load: ${WALLET_NAME}"
+
+  # create if missing (ignore errors)
+  rpc "{\"jsonrpc\":\"1.0\",\"id\":\"cw\",\"method\":\"createwallet\",\"params\":[\"${WALLET_NAME}\"]}" >/dev/null 2>&1 || true
+  # load (ignore errors)
+  rpc "{\"jsonrpc\":\"1.0\",\"id\":\"lw\",\"method\":\"loadwallet\",\"params\":[\"${WALLET_NAME}\"]}"   >/dev/null 2>&1 || true
+
+  sleep 3
 done

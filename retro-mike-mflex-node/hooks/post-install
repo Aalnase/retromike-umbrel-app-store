@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Intentionally no-op.
+# MFLEX pool is provided by Miningcore (Multiflex-Version) defaults.
+exit 0
