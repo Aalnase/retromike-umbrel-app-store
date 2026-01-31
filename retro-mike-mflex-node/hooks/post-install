@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
-# Intentionally no-op.
-# MFLEX pool is provided by Miningcore (Multiflex-Version) defaults.
+# MFLEX wallet + Miningcore pool registration is done manually (console).
 exit 0
