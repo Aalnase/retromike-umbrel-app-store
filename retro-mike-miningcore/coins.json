@@ -6820,20 +6820,32 @@
     "explorerAccountLink": "https://explorer.cryptix-network.org/addresses/{0}"
   },
   "multiflex": {
-    "name": "MultiFlex",
-    "canonicalName": "MultiFlex",
+    "name": "Multiflex",
+    "canonicalName": "Multiflex",
     "symbol": "MFLEX",
-    "website": "https://github.com/Aalnase/multiflexcoin",
-    "explorer": "https://explorer.multiflexcoin.com",
-    "explorerBlockLink": "https://explorer.multiflexcoin.com/block/{0}",
-    "explorerTxLink": "https://explorer.multiflexcoin.com/tx/{0}",
     "family": "bitcoin",
-    "rewardType": "POW",
-    "hasSmartContract": false,
-    "isTestnet": false,
-    "headerHasher": "sha256d",
-    "blockHasher": "sha256d",
-    "coinbaseHasher": "sha256d",
-    "posBlockHasher": "sha256d"
+    "website": "https://multiflexcoin.com/",
+    "market": "",
+    "twitter": "",
+    "telegram": "",
+    "discord": "",
+    "coinbaseHasher": {
+      "hash": "sha256d"
+    },
+    "headerHasher": {
+      "hash": "sha256d"
+    },
+    "blockHasher": {
+      "hash": "reverse",
+      "args": [
+        {
+          "hash": "sha256d"
+        }
+      ]
+    },
+    "coinbaseIgnoreAuxFlags": true,
+    "explorerBlockLink": "https://explorer.multiflexcoin.com/block/$hash$",
+    "explorerTxLink": "https://explorer.multiflexcoin.com/tx/{0}",
+    "explorerAccountLink": "https://explorer.multiflexcoin.com/address/{0}"
   }
 }

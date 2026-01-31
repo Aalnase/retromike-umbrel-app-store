@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# NOTE: No `set -euo pipefail` on purpose.
+
+APP_DATA_DIR="${APP_DATA_DIR:-/home/umbrel/umbrel/app-data/retro-mike-miningcore}"
+MC_DIR="/home/umbrel/.miningcore"
+
+seed_if_missing() {
+  local src="$1"
+  local dst="$2"
+
+  # If Docker ever created a directory at this path (happens when the file was missing), remove it.
+  if [ -d "$dst" ]; then
+    rm -rf "$dst" 2>/dev/null || true
+  fi
+
+  if [ ! -f "$dst" ]; then
+    cp -a "$src" "$dst" 2>/dev/null || true
+  fi
+}
+
+echo "== Miningcore pre-start =="
+
+mkdir -p "$MC_DIR/pools.d" "$MC_DIR/wallet-backups" 2>/dev/null || true
+
+# Seed base files (only if missing)
+seed_if_missing "$APP_DATA_DIR/coins.json"       "$MC_DIR/coins.json"
+seed_if_missing "$APP_DATA_DIR/fees.json"        "$MC_DIR/fees.json"
+seed_if_missing "$APP_DATA_DIR/assets/config.base.json" "$MC_DIR/config.base.json"
+
+# Always render config.json (safe even if there are no pools yet)
+python3 "$APP_DATA_DIR/scripts/render-config.py" >/dev/null 2>&1 || true
+
+# Fix ownership + perms (Miningcore container runs as 1000:1000)
+chown -R 1000:1000 "$MC_DIR" 2>/dev/null || true
+find "$MC_DIR" -type d -exec chmod 755 {} + 2>/dev/null || true
+find "$MC_DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
+
+exit 0
