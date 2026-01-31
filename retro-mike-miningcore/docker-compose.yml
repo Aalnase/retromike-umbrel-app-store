@@ -15,17 +15,18 @@ services:
     entrypoint:
       - /bin/sh
       - -lc
-    command: |
-      echo "[miningcore] wrapper: waiting for pools to be configured..."
-      # Miningcore exits if no pools are enabled. This wrapper keeps the container alive
-      # until a node app (e.g. MFLEX node) registers a pool and config.json contains pools.
-      while true; do
-        if [ -f /app/config.json ] && ! grep -qF '"pools": []' /app/config.json; then
-          echo "[miningcore] pools detected in config.json -> starting Miningcore"
-          exec dotnet /app/build/Miningcore.dll -c /app/config.json
-        fi
-        sleep 5
-      done
+    command:
+      - |
+          echo "[miningcore] wrapper: waiting for pools to be configured..."
+          # Miningcore exits if no pools are enabled. This wrapper keeps the container alive
+          # until a node app (e.g. MFLEX node) registers a pool and config.json contains pools.
+          while true; do
+            if [ -f /app/config.json ] && ! grep -qF '"pools": []' /app/config.json; then
+              echo "[miningcore] pools detected in config.json -> starting Miningcore"
+              exec dotnet /app/build/Miningcore.dll -c /app/config.json
+            fi
+            sleep 5
+          done
     ports:
       - 4000:4000
       - 6001-6025:6001-6025

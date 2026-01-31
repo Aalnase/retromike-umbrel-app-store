@@ -30,11 +30,8 @@ support: https://hub.docker.com/r/theretromike/miningcore
 gallery:
   - https://raw.githubusercontent.com/oliverw/miningcore/master/logo.png
 releaseNotes: |
-  2026.01.31 - Store rename + improved first-run behavior (no abort without pools)
-  2026.01.15 - Added Vertcoin Support
-  2026.01.11 - Fixed Coin Config Mapping (Needed for BC2)
-  2025.12.12 - Increased default stratum port to be 25 to allow for multiple coins
-  2025.11.30 - Initial Release
+  MFLEX-ready Miningcore build.
+  Fix: Umbrel install stuck at 99% due to invalid docker-compose command.
 
 dependencies:
   - retro-mike-postgres
