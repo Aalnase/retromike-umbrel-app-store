@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: retro-mike-mflex-miningcore-helper_web_1
+      APP_PORT: 8080
+
+  web:
+    image: python:3.12-alpine
+    user: "1000:1000"
+    restart: unless-stopped
+    command: ["python", "/srv/mflex_helper.py"]
+    volumes:
+      - ${APP_DATA_DIR}/scripts/mflex_helper.py:/srv/mflex_helper.py:ro
+      - /home/umbrel/.miningcore:/mc
+    environment:
+      PORT: "8080"
+
+      # MFLEX daemon RPC (mflex-node app)
+      MFLEX_RPC_HOST: retro-mike-mflex-node_node_1
+      MFLEX_RPC_PORT: "9010"
+      MFLEX_RPC_USER: pooluser
+      MFLEX_RPC_PASS: poolpassword
+
+      # wallet + address type
+      MFLEX_WALLET: pool
+      MFLEX_ADDR_TYPE: legacy
+
+      # Miningcore config patch target
+      POOL_ID: mflex
+      MININGCORE_CONFIG: /mc/config.json

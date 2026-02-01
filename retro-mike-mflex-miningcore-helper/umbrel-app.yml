@@ -1,0 +1,27 @@
+manifestVersion: 1.1
+id: retro-mike-mflex-miningcore-helper
+name: MFLEX Miningcore Helper
+tagline: Create a legacy pool address and patch Miningcore config
+icon: https://multiflexcoin.com/assets/img/mflex_symbol_64.png
+category: SOLO Crypto Mining
+version: "2.0.0-umbrel2"
+port: 8576
+description: |
+  One-click helper for Multiflex (MFLEX) + Miningcore on Umbrel.
+
+  What it does:
+  - Ensures the MFLEX wallet "pool" exists & is loaded
+  - Creates a legacy address
+  - Writes the address into Miningcore's config.json for the MFLEX pool (POOL_ID=mflex)
+
+  After running the helper, restart Miningcore.
+developer: Multiflex
+website: https://multiflexcoin.com/
+submitter: Community
+submission: https://github.com/Aalnase/multiflexcoin
+repo: https://github.com/Aalnase/multiflexcoin
+support: https://github.com/Aalnase/multiflexcoin/issues
+releaseNotes: |
+  Fix: mount helper script correctly (no more missing /srv/mflex_helper.py).
+dependencies: []
+path: ""
